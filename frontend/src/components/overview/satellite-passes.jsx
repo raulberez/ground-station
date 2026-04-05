@@ -327,17 +327,9 @@ const CustomPagination = () => {
     );
 };
 
-const TimeFormatter = React.memo(function TimeFormatter({params, value}) {
-    const [, setForceUpdate] = useState(0);
+const TimeFormatter = React.memo(function TimeFormatter({params, value, nowMs}) {
     const { timezone, locale } = useUserTimeSettings();
-
-    // Force component to update regularly
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setForceUpdate(prev => prev + 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+    const relativeTime = useMemo(() => humanizeFutureDateInMinutes(value), [value, nowMs]);
 
     if (params.row.is_geostationary || params.row.is_geosynchronous) {
         return "∞";
@@ -346,7 +338,7 @@ const TimeFormatter = React.memo(function TimeFormatter({params, value}) {
     return (
         <Box sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             <Typography component="span" variant="caption" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                {humanizeFutureDateInMinutes(value)}
+                {relativeTime}
             </Typography>
             <Typography component="span" className="passes-time-absolute" variant="caption" sx={{ color: 'text.secondary', ml: 0.5 }}>
                 · {getTimeFromISO(value, timezone, locale)}
@@ -356,19 +348,9 @@ const TimeFormatter = React.memo(function TimeFormatter({params, value}) {
 });
 
 
-const DurationFormatter = React.memo(function DurationFormatter({params, value, event_start, event_end}) {
-    const [, setForceUpdate] = useState(0);
+const DurationFormatter = React.memo(function DurationFormatter({params, event_start, event_end, nowMs}) {
     const { t } = useTranslation('overview');
-
-    // Force component to update regularly
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setForceUpdate(prev => prev + 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const now = new Date();
+    const now = new Date(nowMs);
     const startDate = new Date(event_start);
     const endDate = new Date(event_end);
 
@@ -424,8 +406,7 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
     const currentLanguage = i18n.language;
     const dataGridLocale = currentLanguage === 'el' ? elGR : enUS;
     const [page, setPage] = useState(0);
-    const pageRef = useRef(0);
-    const pageSizeRef = useRef(pageSize);
+    const [nowMs, setNowMs] = useState(() => Date.now());
 
     // Convert minutes to hours for display
     const projectionHours = Math.round(orbitProjectionDuration / 60);
@@ -442,44 +423,18 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
     });
 
     useEffect(() => {
-        pageSizeRef.current = pageSize;
-    }, [pageSize]);
-
-    const getVisiblePageRowIds = useCallback(() => {
-        if (!apiRef.current) return [];
-        const sortedIds = apiRef.current.getSortedRowIds?.() ?? apiRef.current.getAllRowIds?.() ?? [];
-        const currentPage = pageRef.current ?? 0;
-        const currentPageSize = pageSizeRef.current ?? pageSize;
-        const start = currentPage * currentPageSize;
-        const end = start + currentPageSize;
-        return sortedIds.slice(start, end);
-    }, [apiRef, pageSize]);
-
-    useEffect(() => {
         const intervalId = setInterval(() => {
-            const rowIds = getVisiblePageRowIds();
-            rowIds.forEach((rowId) => {
-                const rowNode = apiRef.current.getRowNode(rowId);
-                if (!rowNode) {
-                    return;
-                }
-
-                apiRef.current.updateRows([{
-                    id: rowId,
-                    _rowClassName: ''
-                }]);
-            });
+            setNowMs(Date.now());
         }, 1000);
-
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [apiRef, getVisiblePageRowIds]);
+        return () => clearInterval(intervalId);
+    }, []);
 
     const localeText = useMemo(() => ({
         ...dataGridLocale.components.MuiDataGrid.defaultProps.localeText,
         noRowsLabel: t('passes_table.no_passes', { hours: projectionHours })
     }), [dataGridLocale.components.MuiDataGrid.defaultProps.localeText, projectionHours, t]);
+
+    const now = useMemo(() => new Date(nowMs), [nowMs]);
 
     const columns = useMemo(() => [
         {
@@ -489,7 +444,7 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             flex: 1,
             align: 'center',
             headerAlign: 'center',
-            valueGetter: (_value, row) => getPassStatus(row),
+            valueGetter: (_value, row) => getPassStatus(row, now),
             sortComparator: (v1, v2) => getPassStatusPriority(v1) - getPassStatusPriority(v2),
             renderCell: (params) => {
                 const status = params.value;
@@ -592,7 +547,6 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             flex: 1,
             sortable: false,
             renderCell: (params) => {
-                const now = new Date();
                 const isActive = new Date(params.row.event_start) < now && new Date(params.row.event_end) > now;
 
                 if (!isActive) {
@@ -629,10 +583,11 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             align: 'center',
             headerAlign: 'center',
             flex: 1,
+            sortable: false,
             renderCell: (params) => (
                 <div>
-                    <DurationFormatter params={params} value={params.value} event_start={params.row.event_start}
-                                       event_end={params.row.event_end}/>
+                    <DurationFormatter params={params} event_start={params.row.event_start}
+                                       event_end={params.row.event_end} nowMs={nowMs}/>
                 </div>
             )
         },
@@ -722,14 +677,14 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             minWidth: 170,
             headerName: t('passes_table.start'),
             flex: 2,
-            renderCell: (params) => <TimeFormatter params={params} value={params.value}/>
+            renderCell: (params) => <TimeFormatter params={params} value={params.value} nowMs={nowMs}/>
         },
         {
             field: 'event_end',
             minWidth: 170,
             headerName: t('passes_table.end'),
             flex: 2,
-            renderCell: (params) => <TimeFormatter params={params} value={params.value}/>
+            renderCell: (params) => <TimeFormatter params={params} value={params.value} nowMs={nowMs}/>
         },
         {
             field: 'distance_at_start',
@@ -788,7 +743,7 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             },
             hide: true,
         },
-    ], [t, targetSatTrackRef, selectedSatellitePositionsRef]);
+    ], [t, targetSatTrackRef, selectedSatellitePositionsRef, now, nowMs]);
 
     const effectiveColumnVisibility = useMemo(() => {
         const base = {
@@ -816,7 +771,6 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
 
     const getPassesRowStyles = useCallback((param) => {
         if (param.row) {
-            const now = new Date();
             const eventStart = new Date(param.row.event_start);
             const status = getPassStatus(param.row, now);
             if (status === 'dead') return 'passes-row-dead pointer-cursor';
@@ -828,14 +782,12 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             return "pointer-cursor";
         }
         return "pointer-cursor";
-    }, []);
+    }, [now]);
 
     const getRowId = useCallback((params) => params.id, []);
 
     const handlePaginationModelChange = useCallback((model) => {
         setPage(model.page);
-        pageRef.current = model.page;
-        pageSizeRef.current = model.pageSize;
         if (onPageSizeChange && model.pageSize !== pageSize) {
             onPageSizeChange(model.pageSize);
         }
@@ -936,6 +888,7 @@ const NextPassesGroupIsland = React.memo(function NextPassesGroupIsland() {
     const hasLoadedFromStorageRef = useRef(false);
     const isLoadingRef = useRef(false);
     const [quickFilterPreset, setQuickFilterPreset] = useState('all');
+    const [filterNowMs, setFilterNowMs] = useState(() => Date.now());
 
     // Load column visibility from localStorage on mount
     useEffect(() => {
@@ -973,6 +926,13 @@ const NextPassesGroupIsland = React.memo(function NextPassesGroupIsland() {
             }
         }
     }, [passesTableColumnVisibility]);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setFilterNowMs(Date.now());
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, []);
 
     const handleRefreshPasses = () => {
         if (selectedSatGroupId) {
@@ -1171,7 +1131,7 @@ const NextPassesGroupIsland = React.memo(function NextPassesGroupIsland() {
     };
 
     const filteredPasses = useMemo(() => {
-        const now = new Date();
+        const now = new Date(filterNowMs);
         if (quickFilterPreset === 'live') {
             return passes.filter((pass) => getPassStatus(pass, now) === 'live');
         }
@@ -1185,7 +1145,7 @@ const NextPassesGroupIsland = React.memo(function NextPassesGroupIsland() {
             });
         }
         return passes;
-    }, [passes, quickFilterPreset]);
+    }, [passes, quickFilterPreset, filterNowMs]);
 
     const applyDefaultSort = useCallback(() => {
         dispatch(setPassesTableSortModel([
@@ -1203,9 +1163,7 @@ const NextPassesGroupIsland = React.memo(function NextPassesGroupIsland() {
             ]));
             return;
         }
-        if (preset === 'all') {
-            applyDefaultSort();
-        }
+        applyDefaultSort();
     }, [dispatch, applyDefaultSort]);
 
     useEffect(() => {
