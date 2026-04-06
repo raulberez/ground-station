@@ -67,6 +67,7 @@ export default function AntennaRotatorTable() {
     const isEditing = Boolean(formValues.id);
     const requiresDeleteConfirmationText = selected.length > 1;
     const canConfirmDelete = !requiresDeleteConfirmationText || deleteConfirmText.trim() === 'DELETE';
+    const formatDegrees = (value) => (value === null || value === undefined || value === '' ? '' : `${value}°`);
 
     const columns = [
         {field: 'name', headerName: t('rotator.name'), flex: 1, minWidth: 150},
@@ -83,8 +84,22 @@ export default function AntennaRotatorTable() {
                 return value;
             }
         },
-        {field: 'minaz', headerName: t('rotator.min_az'), type: 'number', flex: 1, minWidth: 80},
-        {field: 'maxaz', headerName: t('rotator.max_az'), type: 'number', flex: 1, minWidth: 80},
+        {
+            field: 'minaz',
+            headerName: t('rotator.min_az'),
+            type: 'number',
+            flex: 1,
+            minWidth: 80,
+            valueFormatter: (value) => formatDegrees(value)
+        },
+        {
+            field: 'maxaz',
+            headerName: t('rotator.max_az'),
+            type: 'number',
+            flex: 1,
+            minWidth: 80,
+            valueFormatter: (value) => formatDegrees(value)
+        },
         {
             field: 'azimuth_mode',
             headerName: t('rotator.azimuth_range'),
@@ -95,10 +110,38 @@ export default function AntennaRotatorTable() {
                     ? t('rotator.azimuth_mode_neg180_180')
                     : t('rotator.azimuth_mode_0_360')
         },
-        {field: 'minel', headerName: t('rotator.min_el'), type: 'number', flex: 1, minWidth: 80},
-        {field: 'maxel', headerName: t('rotator.max_el'), type: 'number', flex: 1, minWidth: 80},
-        {field: 'aztolerance', headerName: t('rotator.az_tolerance'), type: 'number', flex: 1, minWidth: 110},
-        {field: 'eltolerance', headerName: t('rotator.el_tolerance'), type: 'number', flex: 1, minWidth: 110},
+        {
+            field: 'minel',
+            headerName: t('rotator.min_el'),
+            type: 'number',
+            flex: 1,
+            minWidth: 80,
+            valueFormatter: (value) => formatDegrees(value)
+        },
+        {
+            field: 'maxel',
+            headerName: t('rotator.max_el'),
+            type: 'number',
+            flex: 1,
+            minWidth: 80,
+            valueFormatter: (value) => formatDegrees(value)
+        },
+        {
+            field: 'aztolerance',
+            headerName: t('rotator.az_tolerance'),
+            type: 'number',
+            flex: 1,
+            minWidth: 110,
+            valueFormatter: (value) => formatDegrees(value)
+        },
+        {
+            field: 'eltolerance',
+            headerName: t('rotator.el_tolerance'),
+            type: 'number',
+            flex: 1,
+            minWidth: 110,
+            valueFormatter: (value) => formatDegrees(value)
+        },
     ];
 
     // useEffect(() => {
