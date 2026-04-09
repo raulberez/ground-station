@@ -259,7 +259,7 @@ const BookmarkCanvas = ({
         };
 
         const getClusterKey = (bookmark) => {
-            const frequencyKey = Math.round(Number(bookmark.frequency) || 0);
+            const frequencyKey = String(bookmark.frequency ?? 0);
             const sourceKey = bookmark.metadata?.source || 'unknown';
             const typeKey = bookmark.metadata?.type || 'unknown';
             const aliveKey = typeof bookmark.metadata?.alive === 'boolean' ? String(bookmark.metadata.alive) : 'unknown';
