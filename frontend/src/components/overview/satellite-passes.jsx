@@ -897,7 +897,7 @@ const MemoizedStyledDataGrid = React.memo(function MemoizedStyledDataGrid({
             minWidth: 170,
             align: 'center',
             headerAlign: 'center',
-            headerName: t('passes_table.transmitter_links', { defaultValue: 'Up/Down' }),
+            headerName: t('passes_table.transmitter_links', { defaultValue: 'Links' }),
             flex: 2,
             sortable: false,
             valueGetter: (_value, row) => row.transmitters,
