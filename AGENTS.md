@@ -24,6 +24,7 @@
 - For pytest runs, set `ALEMBIC_CONTEXT=1` to avoid app CLI argument parsing conflicts (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -q`).
 - Frontend E2E tests require the app/backend to be running and reachable by Playwright test config.
 - When running backend locally for development, I prefer port `8000` instead of the default `5000` to avoid conflicts with other services on my machine.
+- I keep my local DB at `data/db/dev.db` instead of the default `gs.db` to make it easy to wipe without touching any shared/test data.
 
 ## GitHub Safety
 - Never post/comment/create/update/delete on GitHub (issues/PRs/comments/labels/assignees/milestones/releases) unless the user explicitly asks for that exact write action in the current turn.
