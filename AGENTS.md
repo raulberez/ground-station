@@ -28,6 +28,7 @@
 - When running pytest locally I usually add `-v` for verbose output so it's easier to see which tests pass/fail at a glance (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v -m unit`).
 - When running all tests (not just unit), use `-m ""` or omit the `-m` flag entirely to avoid filtering by marker (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v`).
 - I also like adding `--tb=short` to pytest runs to keep tracebacks readable without being overwhelming (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v --tb=short`).
+- My go-to full local test command combining all the above flags: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v --tb=short` — I run this before pushing anything.
 
 ## GitHub Safety
 - Never post/comment/create/update/delete on GitHub (issues/PRs/comments/labels/assignees/milestones/releases) unless the user explicitly asks for that exact write action in the current turn.
