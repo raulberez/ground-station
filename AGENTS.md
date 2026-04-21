@@ -27,6 +27,7 @@
 - I keep my local DB at `data/db/dev.db` instead of the default `gs.db` to make it easy to wipe without touching any shared/test data.
 - When running pytest locally I usually add `-v` for verbose output so it's easier to see which tests pass/fail at a glance (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v -m unit`).
 - When running all tests (not just unit), use `-m ""` or omit the `-m` flag entirely to avoid filtering by marker (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v`).
+- I also like adding `--tb=short` to pytest runs to keep tracebacks readable without being overwhelming (example: `cd backend && ALEMBIC_CONTEXT=1 ./venv/bin/pytest -v --tb=short`).
 
 ## GitHub Safety
 - Never post/comment/create/update/delete on GitHub (issues/PRs/comments/labels/assignees/milestones/releases) unless the user explicitly asks for that exact write action in the current turn.
